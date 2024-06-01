@@ -1,5 +1,5 @@
 Bingung cara Masang ke tradingviewnya gimana?
-br>
+<br>
 Follow instagram account : @chasoul.ux
-br>
+<br>
 lihat tutorial cara pemasangannya di hightlight ( TradingView )
