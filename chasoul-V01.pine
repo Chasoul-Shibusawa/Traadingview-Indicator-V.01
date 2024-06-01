@@ -1,0 +1,100 @@
+//@version=4
+study(title="Moving Average Convergence Divergence (MACD) with Support and Resistance and Buy/Sell Zones", shorttitle="MACD SR Buy/Sell", format=format.price, precision=2, overlay=true)
+
+// Pengaturan MACD
+fastLength = input(12, title="Fast MA Length")
+slowLength = input(26, title="Slow MA Length")
+signalSmoothing = input(9, title="Signal Smoothing")
+
+// Menghitung EMA dari harga penutupan
+emaFast = ema(close, fastLength)
+emaSlow = ema(close, slowLength)
+
+// Menghitung MACD line
+macdLine = emaFast - emaSlow
+
+// Menghitung signal line
+signalLine = ema(macdLine, signalSmoothing)
+
+// Plotting MACD line dan signal line
+plot(macdLine, color=color.blue, title="MACD Line")
+plot(signalLine, color=color.red, title="Signal Line")
+
+// Plotting histogram
+histogram = macdLine - signalLine
+plot(histogram, color=color.green, style=plot.style_histogram, linewidth=4, title="Histogram")
+
+// Menghasilkan sinyal buy dan sell
+buySignal = crossover(macdLine, signalLine) and histogram > 0
+sellSignal = crossunder(macdLine, signalLine) and histogram < 0
+
+// Plotting indikator buy dan sell
+plotshape(buySignal, style=shape.triangleup, location=location.belowbar, color=color.green, size=size.small, title="Buy Signal")
+plotshape(sellSignal, style=shape.triangledown, location=location.abovebar, color=color.red, size=size.small, title="Sell Signal")
+
+// Menandai Area Buy dan Sell
+bgcolor(buySignal ? color.new(color.green, 80) : sellSignal ? color.new(color.red, 80) : na, title="Buy/Sell Zone")
+
+// Level buy dan sell
+buyPreparationLevel = low
+buyLowEntryLevel = low - (high - low) * 0.01
+buyMediumEntryLevel = close
+buyHighEntryLevel = high + (high - low) * 0.01
+
+sellPreparationLevel = high
+sellLowEntryLevel = high + (high - low) * 0.01
+sellMediumEntryLevel = close
+sellHighEntryLevel = low - (high - low) * 0.01
+
+// Plotting level buy dan sell
+plot(buyPreparationLevel, color=color.green, style=plot.style_circles, linewidth=1, title="Buy Preparation")
+plot(buyLowEntryLevel, color=color.green, style=plot.style_circles, linewidth=1, title="Buy Low Entry")
+plot(buyMediumEntryLevel, color=color.green, style=plot.style_circles, linewidth=1, title="Buy Medium Entry")
+plot(buyHighEntryLevel, color=color.green, style=plot.style_circles, linewidth=1, title="Buy High Entry")
+
+plot(sellPreparationLevel, color=color.red, style=plot.style_circles, linewidth=1, title="Sell Preparation")
+plot(sellLowEntryLevel, color=color.red, style=plot.style_circles, linewidth=1, title="Sell Low Entry")
+plot(sellMediumEntryLevel, color=color.red, style=plot.style_circles, linewidth=1, title="Sell Medium Entry")
+plot(sellHighEntryLevel, color=color.red, style=plot.style_circles, linewidth=1, title="Sell High Entry")
+
+// Mengidentifikasi Support dan Resistance
+support = low[barssince(low > low[1])]
+resistance = high[barssince(high < high[1])]
+
+// Plotting Support dan Resistance
+plot(support, color=color.green, title="Support")
+plot(resistance, color=color.red, title="Resistance")
+
+// Mengidentifikasi Demand dan Supply
+demand = low < low[1] and low[1] > low[2] and low[1] < low[3]
+supply = high > high[1] and high[1] < high[2] and high[1] > high[3]
+
+// Plotting Demand dan Supply
+plotshape(demand, style=shape.triangleup, location=location.belowbar, color=color.green, size=size.small, title="Demand")
+plotshape(supply, style=shape.triangledown, location=location.abovebar, color=color.red, size=size.small, title="Supply")
+
+// Alert ketika terdeteksi sinyal Buy dan Sell yang baik
+alertcondition(buySignal, title="Buy Signal Detected", message="Good time to enter Buy position")
+alertcondition(sellSignal, title="Sell Signal Detected", message="Good time to enter Sell position")
+
+// Take Profit dan Stop Loss
+takeProfitLevel = close + (close - buyLowEntryLevel) * 2
+stopLossLevel = close - (sellHighEntryLevel - close) * 2
+
+// Plotting Take Profit dan Stop Loss
+plot(takeProfitLevel, color=color.green, title="Take Profit")
+plot(stopLossLevel, color=color.red, title="Stop Loss")
+
+// Watermark for Buy Signal
+if (buySignal)
+    label.new(x = bar_index, y = high, text="Created by chasoul vs code", style=label.style_none, yloc=yloc.abovebar, color=color.gray, textcolor=color.gray)
+
+// Watermark for Take Profit (Hanya pada tingkat take profit yang sangat baik)
+var label takelabel = na
+if (close > takeProfitLevel)
+    takelabel := label.new(x = bar_index, y = takeProfitLevel, text="Takeprofit disini ya", style=label.style_none, yloc=yloc.abovebar, color=color.green, textcolor=color.green)
+
+// Watermark for Accurate Take Profit (Hanya pada tingkat take profit yang benar-benar akurat)
+var label acc_take_label = na
+if (close > takeProfitLevel * 1.02) // Misalnya, kita menandai tingkat take profit yang 2% lebih tinggi dari take profit biasa
+    acc_take_label := label.new(x = bar_index, y = takeProfitLevel * 1.02, text="Takeprofit sangat akurat di sini", style=label.style_none, yloc=yloc.abovebar, color=color.blue, textcolor=color.blue)
